@@ -77,27 +77,47 @@
                   <label for="attempt">Word:</label>
                   <input id="attempt" name="attempt" type="text" width="15"
                      autocomplete="off"  autofocus />
-                  <input type="submit" name="try" />
                </form>
             </div>
          </div>
          <br />
-         {% if session.matches|length is not equalto 0  %}
          <h2>You found </h2>
-         <p id="results">
-            {% for match in session.matches %}
-            {{ match }}
-            {% endfor %}
-         </p>
-         {% endif %}
-         {% with messages = get_flashed_messages() %}
-         {% if messages %}
-         <!-- Mismatch, already found, etc. "flashed" from Python -->
-         {% for message in messages %}
+         <p id="results"></p>
          <p class="message">{{ message }}</p>
-         {% endfor %}
-         {% endif %}
-         {% endwith %}
+         <p id="response"></p>
+       <div id="wrong"></div>
+      <script>
+          $("#entry").submit( function(event) {
+               event.preventDefault();
+              });
+            $("#attempt").keyup(function(event) {
+               var txt = $("#attempt").val();  // Current content of the input field
+               var keycode = event.which;      // They key that just went up
+               var letter = String.fromCharCode(keycode);
+
+               if (! "ABCDEFGHIJKLMNOPQRSTUVWXYZ".includes(letter)) { return }
+
+               $.getJSON( "/_check", { text: txt },
+                          function(data) {
+                            rsval = data.result;
+                            console.log("rsval: " + rsval)
+                            if (rsval.matched) {
+
+                               $("#response").append(rsval.matched + "<br>") // appends valid words below "YOU FOUND" header in list form
+                               $("#attempt").val(""); //clears entry from textbox
+                               $("#wrong").html("") // Erases entries marked as invalid when valid match is found
+
+                            }if(rsval.done) {
+                                window.location.href = "/success"; // redirects are page to our success template when the game is over
+                            }else if (data.result.w == "incorrect"){
+                                $("#wrong").html(`${txt} cannot be made from the anagram`) // displays the incorrect word
+
+                              }
+                           }
+                       );
+               });
+      </script>
+
       </div>
       <!-- container -->
    </body>
